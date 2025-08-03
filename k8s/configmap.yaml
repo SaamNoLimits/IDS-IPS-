@@ -1,0 +1,115 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ids-config
+  namespace: enhanced-ids
+  labels:
+    app: enhanced-ids
+data:
+  ids_config.json: |
+    {
+      "model_path": "/app/models/enhanced_ids_model_99percent.h5",
+      "scaler_path": "/app/models/feature_scaler.pkl",
+      "interface": "auto",
+      "log_level": "INFO",
+      "detection_threshold": 0.5,
+      "monitoring_interval": 5,
+      "max_packet_buffer": 1000,
+      "alert_cooldown": 30
+    }
+  
+  prometheus.yml: |
+    global:
+      scrape_interval: 15s
+      evaluation_interval: 15s
+    
+    rule_files:
+      - "ids_rules.yml"
+    
+    scrape_configs:
+      - job_name: 'ids-engine'
+        static_configs:
+          - targets: ['ids-engine-service:8080']
+        scrape_interval: 10s
+        metrics_path: /metrics
+      
+      - job_name: 'ids-dashboard'
+        static_configs:
+          - targets: ['ids-dashboard-service:8501']
+        scrape_interval: 30s
+  
+  nginx.conf: |
+    events {
+        worker_connections 1024;
+    }
+    
+    http {
+        upstream dashboard {
+            server ids-dashboard-service:8501;
+        }
+        
+        upstream grafana {
+            server grafana-service:3000;
+        }
+        
+        server {
+            listen 80;
+            server_name localhost;
+            
+            location / {
+                proxy_pass http://dashboard;
+                proxy_set_header Host $host;
+                proxy_set_header X-Real-IP $remote_addr;
+                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                proxy_set_header X-Forwarded-Proto $scheme;
+            }
+            
+            location /grafana/ {
+                proxy_pass http://grafana/;
+                proxy_set_header Host $host;
+                proxy_set_header X-Real-IP $remote_addr;
+                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                proxy_set_header X-Forwarded-Proto $scheme;
+            }
+        }
+    }
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ids-rules
+  namespace: enhanced-ids
+  labels:
+    app: enhanced-ids
+data:
+  ids_rules.yml: |
+    groups:
+      - name: ids_alerts
+        rules:
+          - alert: HighAttackRate
+            expr: rate(ids_attacks_total[5m]) > 10
+            for: 2m
+            labels:
+              severity: critical
+            annotations:
+              summary: "High attack rate detected"
+              description: "Attack rate is {{ $value }} attacks per second"
+          
+          - alert: IDSEngineDown
+            expr: up{job="ids-engine"} == 0
+            for: 1m
+            labels:
+              severity: critical
+            annotations:
+              summary: "IDS Engine is down"
+              description: "IDS Engine has been down for more than 1 minute"
+          
+          - alert: HighMemoryUsage
+            expr: (node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes > 0.9
+            for: 5m
+            labels:
+              severity: warning
+            annotations:
+              summary: "High memory usage"
+              description: "Memory usage is above 90%"

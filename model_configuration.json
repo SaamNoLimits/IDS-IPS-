@@ -1,0 +1,31 @@
+{
+    "model_architecture": {
+        "type": "Enhanced Deep Neural Network",
+        "layers": 12,
+        "total_parameters": 50532,
+        "optimizer": "Adam",
+        "loss_function": "sparse_categorical_crossentropy",
+        "metrics": [
+            "accuracy"
+        ],
+        "early_stopping": true,
+        "batch_normalization": true,
+        "dropout_layers": true
+    },
+    "preprocessing": {
+        "feature_selection_method": "Correlation-based + Enhanced features",
+        "normalization": "StandardScaler",
+        "class_balancing": "Undersampling",
+        "train_test_split": "70-20-10",
+        "original_features": "Feature list not available"
+    },
+    "class_mapping": {
+        "0": "Benign",
+        "1": "DDoS",
+        "2": "Bruteforce",
+        "3": "Botnet"
+    },
+    "timestamp": "20250802_224854",
+    "model_version": "Enhanced_IDS_v2.0",
+    "performance_rating": "Excellent - 99% accuracy"
+}

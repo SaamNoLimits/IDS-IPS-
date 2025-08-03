@@ -1,0 +1,59 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+metadata:
+  name: enhanced-ids
+  namespace: enhanced-ids
+
+resources:
+  - namespace.yaml
+  - rbac.yaml
+  - configmap.yaml
+  - persistent-volumes.yaml
+  - ids-engine-deployment.yaml
+  - ids-dashboard-deployment.yaml
+  - monitoring-stack.yaml
+
+commonLabels:
+  app: enhanced-ids
+  version: v1.0.0
+  managed-by: kustomize
+
+images:
+  - name: enhanced-ids
+    newTag: latest
+  - name: enhanced-ids
+    newName: enhanced-ids
+    newTag: dashboard
+
+configMapGenerator:
+  - name: ids-environment
+    literals:
+      - ENVIRONMENT=production
+      - LOG_LEVEL=INFO
+      - MONITORING_ENABLED=true
+
+secretGenerator:
+  - name: ids-api-keys
+    literals:
+      - api-key=your-api-key-here
+      - webhook-secret=your-webhook-secret
+
+patchesStrategicMerge:
+  - patches/production-resources.yaml
+
+patchesJson6902:
+  - target:
+      group: apps
+      version: v1
+      kind: Deployment
+      name: ids-engine
+    path: patches/engine-security-context.yaml
+
+replicas:
+  - name: ids-dashboard
+    count: 2
+  - name: prometheus
+    count: 1
+  - name: grafana
+    count: 1

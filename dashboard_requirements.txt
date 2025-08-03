@@ -1,0 +1,13 @@
+streamlit>=1.28.0
+pandas>=1.5.0
+numpy>=1.24.0
+plotly>=5.15.0
+sqlite3
+psutil>=5.9.0
+hashlib
+datetime
+json
+subprocess
+threading
+queue
+collections

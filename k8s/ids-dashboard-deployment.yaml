@@ -1,0 +1,153 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ids-dashboard
+  namespace: enhanced-ids
+  labels:
+    app: enhanced-ids
+    component: dashboard
+spec:
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
+  selector:
+    matchLabels:
+      app: enhanced-ids
+      component: dashboard
+  template:
+    metadata:
+      labels:
+        app: enhanced-ids
+        component: dashboard
+    spec:
+      serviceAccountName: ids-service-account
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+      containers:
+      - name: ids-dashboard
+        image: enhanced-ids:dashboard
+        imagePullPolicy: IfNotPresent
+        env:
+        - name: PYTHONPATH
+          value: "/app"
+        - name: STREAMLIT_SERVER_PORT
+          value: "8501"
+        - name: STREAMLIT_SERVER_ADDRESS
+          value: "0.0.0.0"
+        - name: STREAMLIT_BROWSER_GATHER_USAGE_STATS
+          value: "false"
+        - name: STREAMLIT_SERVER_HEADLESS
+          value: "true"
+        ports:
+        - containerPort: 8501
+          name: http
+          protocol: TCP
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "2Gi"
+            cpu: "1"
+        volumeMounts:
+        - name: ids-config
+          mountPath: /app/config
+          readOnly: true
+        - name: ids-logs
+          mountPath: /app/logs
+          readOnly: true
+        - name: ids-data
+          mountPath: /app/data
+          readOnly: true
+        livenessProbe:
+          httpGet:
+            path: /_stcore/health
+            port: 8501
+          initialDelaySeconds: 30
+          periodSeconds: 30
+          timeoutSeconds: 10
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /_stcore/health
+            port: 8501
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        command: 
+        - "streamlit"
+        - "run"
+        - "professional_dashboard.py"
+        - "--server.port=8501"
+        - "--server.address=0.0.0.0"
+        - "--server.headless=true"
+        - "--server.enableCORS=false"
+        - "--server.enableXsrfProtection=false"
+      volumes:
+      - name: ids-config
+        configMap:
+          name: ids-config
+      - name: ids-logs
+        persistentVolumeClaim:
+          claimName: ids-logs-pvc
+      - name: ids-data
+        persistentVolumeClaim:
+          claimName: ids-data-pvc
+      nodeSelector:
+        kubernetes.io/os: linux
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ids-dashboard-service
+  namespace: enhanced-ids
+  labels:
+    app: enhanced-ids
+    component: dashboard
+spec:
+  selector:
+    app: enhanced-ids
+    component: dashboard
+  ports:
+  - name: http
+    port: 8501
+    targetPort: 8501
+    protocol: TCP
+  type: ClusterIP
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ids-dashboard-ingress
+  namespace: enhanced-ids
+  labels:
+    app: enhanced-ids
+    component: dashboard
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: "600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "600"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
+    nginx.ingress.kubernetes.io/proxy-body-size: "50m"
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: ids-dashboard.local
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: ids-dashboard-service
+            port:
+              number: 8501

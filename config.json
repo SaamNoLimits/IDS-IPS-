@@ -1,0 +1,9 @@
+{
+    "model_path": "/opt/ids-pipeline/models/enhanced_ids_model_99percent.h5",
+    "scaler_path": "/opt/ids-pipeline/models/feature_scaler.pkl",
+    "interface": "auto",
+    "detection_window": 5,
+    "confidence_threshold": 0.8,
+    "auto_block": false,
+    "log_level": "INFO"
+}

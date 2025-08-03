@@ -1,0 +1,71 @@
+{
+    "model_performance": {
+        "final_validation_accuracy": 0.9873,
+        "overall_accuracy": 0.99,
+        "total_epochs_trained": 46,
+        "early_stopping_epoch": 46,
+        "best_val_loss": 0.0428,
+        "best_val_accuracy": 0.9877
+    },
+    "classification_report": {
+        "Benign": {
+            "precision": 0.96,
+            "recall": 0.98,
+            "f1-score": 0.97,
+            "support": 10189
+        },
+        "DDoS": {
+            "precision": 1.0,
+            "recall": 0.99,
+            "f1-score": 0.99,
+            "support": 10205
+        },
+        "Bruteforce": {
+            "precision": 1.0,
+            "recall": 0.99,
+            "f1-score": 0.99,
+            "support": 10325
+        },
+        "Botnet": {
+            "precision": 0.99,
+            "recall": 0.98,
+            "f1-score": 0.99,
+            "support": 10166
+        },
+        "accuracy": 0.99,
+        "macro_avg": {
+            "precision": 0.99,
+            "recall": 0.99,
+            "f1-score": 0.99
+        },
+        "weighted_avg": {
+            "precision": 0.99,
+            "recall": 0.99,
+            "f1-score": 0.99
+        }
+    },
+    "misclassification_analysis": {
+        "Benign_misclassified_as_DDoS": 22,
+        "Benign_misclassified_as_Bruteforce": 46,
+        "Benign_misclassified_as_Botnet": 109,
+        "DDoS_misclassified_as_Benign": 112,
+        "DDoS_misclassified_as_Bruteforce": 1,
+        "DDoS_misclassified_as_Botnet": 6,
+        "Bruteforce_misclassified_as_Benign": 82,
+        "Botnet_misclassified_as_Benign": 179,
+        "total_misclassifications": 557,
+        "total_samples": 40885,
+        "misclassification_rate": 0.0136
+    },
+    "data_info": {
+        "total_validation_samples": 40885,
+        "class_distribution": {
+            "Benign": 10189,
+            "DDoS": 10205,
+            "Bruteforce": 10325,
+            "Botnet": 10166
+        },
+        "features_used": "Unknown",
+        "balancing_method": "Undersampling to equal class sizes"
+    }
+}

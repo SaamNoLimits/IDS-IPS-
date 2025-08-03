@@ -1,0 +1,156 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ids-engine
+  namespace: enhanced-ids
+  labels:
+    app: enhanced-ids
+    component: engine
+spec:
+  replicas: 1  # Single replica for network monitoring
+  strategy:
+    type: Recreate  # Ensure only one instance monitors network
+  selector:
+    matchLabels:
+      app: enhanced-ids
+      component: engine
+  template:
+    metadata:
+      labels:
+        app: enhanced-ids
+        component: engine
+    spec:
+      serviceAccountName: ids-service-account
+      hostNetwork: true  # Required for network packet capture
+      dnsPolicy: ClusterFirstWithHostNet
+      securityContext:
+        runAsUser: 0  # Required for network operations
+        runAsGroup: 0
+        fsGroup: 0
+      containers:
+      - name: ids-engine
+        image: enhanced-ids:latest
+        imagePullPolicy: IfNotPresent
+        securityContext:
+          privileged: true  # Required for iptables and network operations
+          capabilities:
+            add:
+              - NET_ADMIN
+              - NET_RAW
+              - SYS_ADMIN
+        env:
+        - name: PYTHONPATH
+          value: "/app"
+        - name: IDS_MODE
+          value: "production"
+        - name: LOG_LEVEL
+          value: "INFO"
+        - name: INTERFACE
+          value: "auto"
+        - name: NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        ports:
+        - containerPort: 8080
+          name: metrics
+          protocol: TCP
+        resources:
+          requests:
+            memory: "1Gi"
+            cpu: "500m"
+          limits:
+            memory: "4Gi"
+            cpu: "2"
+        volumeMounts:
+        - name: ids-config
+          mountPath: /app/config
+          readOnly: true
+        - name: ids-models
+          mountPath: /app/models
+          readOnly: true
+        - name: ids-logs
+          mountPath: /app/logs
+        - name: ids-data
+          mountPath: /app/data
+        - name: host-proc
+          mountPath: /host/proc
+          readOnly: true
+        - name: host-sys
+          mountPath: /host/sys
+          readOnly: true
+        livenessProbe:
+          exec:
+            command:
+            - python
+            - -c
+            - "import psutil; exit(0 if any('ids.py' in ' '.join(p.cmdline()) for p in psutil.process_iter()) else 1)"
+          initialDelaySeconds: 60
+          periodSeconds: 30
+          timeoutSeconds: 10
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        command: ["python", "ids.py"]
+      volumes:
+      - name: ids-config
+        configMap:
+          name: ids-config
+      - name: ids-models
+        persistentVolumeClaim:
+          claimName: ids-models-pvc
+      - name: ids-logs
+        persistentVolumeClaim:
+          claimName: ids-logs-pvc
+      - name: ids-data
+        persistentVolumeClaim:
+          claimName: ids-data-pvc
+      - name: host-proc
+        hostPath:
+          path: /proc
+      - name: host-sys
+        hostPath:
+          path: /sys
+      nodeSelector:
+        kubernetes.io/os: linux
+      tolerations:
+      - key: node-role.kubernetes.io/master
+        operator: Exists
+        effect: NoSchedule
+      - key: node-role.kubernetes.io/control-plane
+        operator: Exists
+        effect: NoSchedule
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ids-engine-service
+  namespace: enhanced-ids
+  labels:
+    app: enhanced-ids
+    component: engine
+spec:
+  selector:
+    app: enhanced-ids
+    component: engine
+  ports:
+  - name: metrics
+    port: 8080
+    targetPort: 8080
+    protocol: TCP
+  type: ClusterIP

@@ -1,0 +1,1 @@
+{"detection_threshold": 0.4, "packet_buffer_size": 100, "analysis_window": 3, "log_level": "INFO"}

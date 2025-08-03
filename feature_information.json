@@ -1,0 +1,26 @@
+{
+    "feature_names": [
+        "Avg Packet Size",
+        "Packet Length Mean",
+        "Bwd Packet Length Std",
+        "Packet Length Variance",
+        "Bwd Packet Length Max",
+        "Packet Length Max",
+        "Packet Length Std",
+        "Fwd Packet Length Mean",
+        "Avg Fwd Segment Size",
+        "Flow Bytes/s",
+        "Avg Bwd Segment Size",
+        "Bwd Packet Length Mean",
+        "Fwd Packets/s",
+        "Flow Packets/s",
+        "Init Fwd Win Bytes",
+        "Subflow Fwd Bytes",
+        "Fwd Packets Length Total",
+        "Fwd Act Data Packets",
+        "Total Fwd Packets",
+        "Subflow Fwd Packets"
+    ],
+    "feature_count": "Unknown",
+    "selected_features": "Not available"
+}

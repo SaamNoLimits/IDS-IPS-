@@ -1,0 +1,47 @@
+# Core ML and Data Processing
+tensorflow>=2.12.0
+scikit-learn>=1.3.0
+pandas>=1.5.0
+numpy>=1.24.0
+joblib>=1.3.0
+
+# Network and System Monitoring
+scapy>=2.5.0
+psutil>=5.9.0
+netifaces>=0.11.0
+
+# Web Dashboard
+streamlit>=1.28.0
+plotly>=5.15.0
+dash>=2.14.0
+dash-bootstrap-components>=1.5.0
+
+# Database and Storage
+sqlite3
+sqlalchemy>=2.0.0
+
+# Utilities
+python-dotenv>=1.0.0
+pyyaml>=6.0
+click>=8.1.0
+colorama>=0.4.6
+tqdm>=4.65.0
+
+# Security and Blockchain
+hashlib2>=1.0.1
+cryptography>=41.0.0
+
+# Monitoring and Logging
+prometheus-client>=0.17.0
+grafana-api>=1.0.3
+
+# Development and Testing
+pytest>=7.4.0
+pytest-cov>=4.1.0
+black>=23.7.0
+flake8>=6.0.0
+
+# Production
+gunicorn>=21.2.0
+uvicorn>=0.23.0
+fastapi>=0.103.0
